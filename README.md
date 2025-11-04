@@ -2,7 +2,7 @@
 
 ## Overview
 
-An intelligent multi-agent system that automatically discovers and aggregates H1B-sponsoring job opportunities from Slack channels. The system monitors job postings, matches them against a curated list of H1B-sponsoring companies, and outputs structured job data for easy review and application tracking.
+For educational purpose only build an intelligent multi-agent system that automatically discovers and aggregates H1B-sponsoring job opportunities from Slack channels. The system monitors job postings, matches them against a curated list of H1B-sponsoring companies, and outputs structured job data for easy review and application tracking.
 
 ## Purpose & Use Case
 
