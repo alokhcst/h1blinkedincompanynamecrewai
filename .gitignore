@@ -1,0 +1,140 @@
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+
+# API Keys & Tokens
+slack_token.txt
+openai_key.txt
+serper_key.txt
+
+# Output Files (Generated Data)
+output/
+*.txt
+*.csv
+*.json
+
+# Exception: Keep knowledge base files
+!knowledge/*.txt
+!knowledge/*.csv
+
+# Exception: Keep example/template files
+!*example*.txt
+!*template*.txt
+!*sample*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# OS Files
+Thumbs.db
+.DS_Store
+.Spotlight-V100
+.Trashes
+desktop.ini
+
+# Documentation (auto-generated)
+site/
+docs/_build/
+
+# CrewAI Specific
+.crewai/
+training_data/
+embeddings/
+
+# UV Package Manager
+.uv/
+uv.lock
+
+# Test Output Files
+*_test.txt
+*_test.json
+*_test.csv
+test_output/
+debug_output/
+
+# Compiled files
+*.pyc
+*.pyo

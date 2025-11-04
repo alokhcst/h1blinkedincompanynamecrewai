@@ -1,0 +1,32 @@
+slack_jobs_task:
+  description: >
+    MANDATORY: Call SlackJobsTool with these exact parameters:
+      - channel_name: "h1bjobs"
+      - days_back: 30
+    
+    The tool will fetch and log ALL messages from the Slack channel.
+    DO NOT say you cannot access Slack - you MUST use the tool.
+    Return EXACTLY what the tool returns - no modifications, no explanations.
+  expected_output: >
+    Plain text log of all messages from #h1bjobs channel, including message details,
+    timestamps, users, attachments, and files. Must include confirmation that data
+    was saved to output/slack_jobs.txt and output/slack_jobs_raw.json
+  agent: slack_reader
+  output_file: output/slack_jobs.txt
+
+slack_parser_task:
+  description: >
+    Use SlackParserTool to parse the Slack messages JSON and extract ALL matching jobs.
+    IMPORTANT: This task MUST run AFTER slack_jobs_task completes successfully.
+    Parameters: slack_json_path: "output/slack_jobs_raw.json", 
+                companies_file_path: {companies_file_path}
+    The tool will match companies and output ALL job details (no keyword filtering).
+  expected_output: >
+    Plain text: company_name, job_title, job_id, job_url
+  agent: slack_parser
+  output_file: output/slack_parsed_jobs.txt
+  context: [slack_jobs_task]
+ 
+
+
+ 
