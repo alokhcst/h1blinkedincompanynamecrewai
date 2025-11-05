@@ -27,6 +27,10 @@ class SlackParserToolInput(BaseModel):
         default="knowledge/H1BCompanyNameAtlanta.txt",
         description="Path to file with company names (one per line)"
     )
+    keywords_file_path: str = Field(
+        default="input/job_keywords.txt",
+        description="Path to file with job keywords (one per line) for filtering"
+    )
     output_file_path: Optional[str] = Field(
         default="output/slack_parsed_jobs.txt",
         description="Output file for parsed jobs"
@@ -37,8 +41,8 @@ class SlackParserTool(BaseTool):
     name: str = "SlackParserTool"
     description: str = (
         "Reads Slack messages from a JSON file, matches company names from a list, "
-        "extracts job details (company, title, ID, URL), and outputs in plain text format. "
-        "Returns ALL jobs where company names match, without keyword filtering."
+        "filters by job keywords, extracts job details (company, title, ID, URL), "
+        "and outputs in plain text format. Only returns jobs matching both company names and keywords."
     )
     args_schema: Type[BaseModel] = SlackParserToolInput
 
@@ -46,10 +50,11 @@ class SlackParserTool(BaseTool):
         self,
         slack_json_path: str = "output/slack_jobs_raw.json",
         companies_file_path: str = "knowledge/H1BCompanyNameAtlanta.txt",
+        keywords_file_path: str = "input/job_keywords.txt",
         output_file_path: Optional[str] = None
     ) -> str:
         """
-        Parse Slack messages, match companies, and extract ALL job details.
+        Parse Slack messages, match companies, filter by keywords, and extract job details.
         
         Returns:
             Plain text: company_name, job_title, job_id, job_url
@@ -60,6 +65,7 @@ class SlackParserTool(BaseTool):
         logger.info(f"Parameters:")
         logger.info(f"  - slack_json_path: {slack_json_path}")
         logger.info(f"  - companies_file_path: {companies_file_path}")
+        logger.info(f"  - keywords_file_path: {keywords_file_path}")
         logger.info(f"  - output_file_path: {output_file_path}")
         
         # Step 1: Load Slack messages from JSON
@@ -85,7 +91,15 @@ class SlackParserTool(BaseTool):
         
         logger.info(f"✓ Loaded {len(companies)} companies")
         logger.info(f"Companies: {companies[:5]}..." if len(companies) > 5 else f"Companies: {companies}")
-        logger.info(f"No keyword filtering - returning ALL jobs for matched companies")
+        
+        # Step 2.5: Load job keywords
+        logger.info(f"STEP 2.5: Loading job keywords from file")
+        keywords = self._load_keywords(keywords_file_path)
+        if not keywords:
+            logger.warning(f"⚠ Could not load keywords from {keywords_file_path}, proceeding without keyword filtering")
+        else:
+            logger.info(f"✓ Loaded {len(keywords)} keywords for filtering")
+            logger.info(f"Keywords: {keywords[:5]}..." if len(keywords) > 5 else f"Keywords: {keywords}")
         
         # Step 3: Process messages and extract matching jobs
         logger.info(f"STEP 3: Processing messages to extract jobs")
@@ -139,6 +153,11 @@ class SlackParserTool(BaseTool):
                         # Extract job title from attachment text
                         job_title = self._extract_job_title_from_text(att_text, job_url)
                         
+                        # Filter by keywords if provided
+                        if keywords and not self._matches_keywords(att_text + " " + job_title, keywords):
+                            logger.debug(f"      Skipping job (no keyword match): {job_title} ({job_id})")
+                            continue
+                        
                         # Add to results
                         matched_jobs.append({
                             'company': mentioned_company,
@@ -177,6 +196,11 @@ class SlackParserTool(BaseTool):
                         continue
                     
                     job_title = self._extract_job_title_from_text(full_text, job_url)
+                    
+                    # Filter by keywords if provided
+                    if keywords and not self._matches_keywords(full_text + " " + job_title, keywords):
+                        logger.debug(f"    Skipping job (no keyword match): {job_title} ({job_id})")
+                        continue
                     
                     matched_jobs.append({
                         'company': mentioned_company,
@@ -262,6 +286,36 @@ class SlackParserTool(BaseTool):
                     companies.append(company)
         
         return companies
+    
+    def _load_keywords(self, keywords_path: str) -> List[str]:
+        """Load job keywords from text file"""
+        if not os.path.exists(keywords_path):
+            logger.warning(f"Keywords file not found: {keywords_path}")
+            return []
+        
+        keywords = []
+        with open(keywords_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                keyword = line.strip()
+                if keyword and not keyword.startswith('#'):
+                    keywords.append(keyword)
+        
+        return keywords
+    
+    def _matches_keywords(self, text: str, keywords: List[str]) -> bool:
+        """Check if text matches any of the job keywords"""
+        text_lower = text.lower()
+        
+        for keyword in keywords:
+            keyword_lower = keyword.lower()
+            # Use word boundary matching to avoid partial matches
+            # e.g., "Engineer" should match "Software Engineer" but not "Engineering"
+            pattern = r'\b' + re.escape(keyword_lower) + r'\b'
+            if re.search(pattern, text_lower):
+                logger.debug(f"      Keyword match found: '{keyword}'")
+                return True
+        
+        return False
     
     def _extract_attachment_text(self, attachment: Dict) -> str:
         """Extract all text from a single attachment"""

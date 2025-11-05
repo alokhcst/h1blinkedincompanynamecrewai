@@ -17,6 +17,7 @@ Finding H1B-sponsored jobs is time-consuming and requires:
 This automated system:
 - ✅ **Monitors** Slack channels for job postings (e.g., #h1bjobs)
 - ✅ **Matches** job postings against a list of 43+ H1B-sponsoring companies in Atlanta
+- ✅ **Filters** jobs by customizable keywords (29 default: Data Engineer, AI roles, Cloud, etc.)
 - ✅ **Extracts** company name, job title, job ID, and LinkedIn URL
 - ✅ **Outputs** clean, deduplicated job listings in plain text format
 - ✅ **Processes** multiple job postings per message with accurate company attribution
@@ -52,7 +53,8 @@ This tool is designed for:
 │                     INPUT SOURCES                               │
 ├─────────────────────────────────────────────────────────────────┤
 │  1. Slack Channel: #h1bjobs                                     │
-│  2. Company List: H1BCompanyNameAtlanta.txt (43 companies)      │
+│  2. Company List: knowledge/H1BCompanyNameAtlanta.txt           │
+│  3. Job Keywords: input/job_keywords.txt (NEW!)                 │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
                            ▼
@@ -72,10 +74,12 @@ This tool is designed for:
 ├─────────────────────────────────────────────────────────────────┤
 │  • Loads slack_jobs_raw.json                                    │
 │  • Loads H1BCompanyNameAtlanta.txt                              │
+│  • Loads job_keywords.txt (NEW!)                                │
 │  • For each Slack message:                                      │
 │    ├─ Processes each attachment separately                      │
 │    ├─ Extracts LinkedIn job URLs                                │
 │    ├─ Matches company name (word boundary matching)             │
+│    ├─ Filters by job keywords (word boundary matching)          │
 │    ├─ Extracts job title from job posting text                  │
 │    └─ Deduplicates by job ID                                    │
 │  • Outputs: output/slack_parsed_jobs.txt                        │
@@ -86,11 +90,12 @@ This tool is designed for:
 │                        OUTPUT                                   │
 ├─────────────────────────────────────────────────────────────────┤
 │  Format: company_name, job_title, job_id, job_url              │
+│  (Only jobs matching BOTH company list AND keywords)            │
 │                                                                 │
 │  Example:                                                       │
 │  Amazon, Senior Data Engineer, 4258508007,                     │
 │    https://www.linkedin.com/jobs/view/4258508007               │
-│  EY, Master Data Governance Manager, 4300664136,               │
+│  EY, Data Management & Strategy Manager, 4300664136,           │
 │    https://www.linkedin.com/jobs/view/4300664136               │
 │  Google, Cloud Solutions Architect, 4314030020,                │
 │    https://www.linkedin.com/jobs/view/4314030020               │
@@ -122,9 +127,10 @@ This tool is designed for:
 
 ### Key Algorithms
 1. **Per-Attachment Processing** - Each Slack message attachment is processed independently to avoid cross-contamination of company matches
-2. **Word Boundary Matching** - Regex `\b` patterns ensure accurate company name matching (e.g., "Amazon" in "Amazon Web Services" ✓, but not "EY" in "survey" ✗)
+2. **Word Boundary Matching** - Regex `\b` patterns ensure accurate company and keyword matching (e.g., "Amazon" in "Amazon Web Services" ✓, but not "EY" in "survey" ✗; "Engineer" in "Data Engineer" ✓, but not in "Engineering" ✗)
 3. **Length-Sorted Company Matching** - Longer, more specific company names are matched first to prevent short-name false positives
-4. **Job ID Deduplication** - Prevents duplicate job listings across multiple messages
+4. **Keyword Filtering** - Jobs must match at least one keyword from a customizable list (default: 29 technical roles)
+5. **Job ID Deduplication** - Prevents duplicate job listings across multiple messages
 
 ## Installation & Setup
 
@@ -219,6 +225,64 @@ Accenture
 ... (add your companies here)
 ```
 
+### Step 7: Customize Job Keywords (NEW!)
+
+Edit `input/job_keywords.txt` to filter jobs by role type. The default configuration includes 29 technical and leadership keywords:
+
+**Data & Analytics:**
+```text
+Data Engineer
+Data Scientist
+Data Analyst
+Data Architect
+Data Engineering Manager
+Analytics Engineer
+Business Intelligence
+```
+
+**AI & Machine Learning:**
+```text
+AI Engineer
+AI Manager
+AI Leader
+Machine Learning Engineer
+Director Data and AI
+```
+
+**Software Development:**
+```text
+Software Engineer
+Full Stack Developer
+Backend Developer
+Frontend Developer
+Senior Developer
+Lead Engineer
+Principal Engineer
+Staff Engineer
+```
+
+**Cloud & Architecture:**
+```text
+Cloud Engineer
+DevOps Engineer
+Solutions Architect
+Technical Architect
+System Engineer
+AWS Solutions Architect
+Azure Solutions Architect
+Azure Databricks
+Snowflake
+```
+
+**How it works:**
+- The parser will only include jobs that match BOTH:
+  1. A company from your company list
+  2. At least one keyword from your keywords list
+- Use word-level matching (e.g., "Engineer" matches "Data Engineer" but not "Engineering")
+- One keyword per line
+- Lines starting with `#` are treated as comments
+- Blank lines are ignored
+
 ## Running the Application
 
 ### Standard Run
@@ -261,9 +325,14 @@ Google, Cloud Solutions Architect, 4314030020, https://www.linkedin.com/jobs/vie
 python test_slack_logging.py
 ```
 
-**Test Slack Parser:**
+**Test Slack Parser (without keywords):**
 ```bash
-python test_slack_parser_logging.py
+python test_slack_parser.py
+```
+
+**Test Slack Parser (with keyword filtering):**
+```bash
+python test_slack_parser_with_keywords.py
 ```
 
 ### Debug Mode (VS Code)
@@ -374,6 +443,8 @@ h1blinkedincompanynamecrewai/
 │   └── tools/
 │       ├── slack_tool.py            # Slack message fetcher
 │       └── slack_parser_tool.py     # Job parser & matcher
+├── input/                           # User configuration (NEW!)
+│   └── job_keywords.txt             # Job keywords filter (EDIT THIS)
 ├── knowledge/
 │   └── H1BCompanyNameAtlanta.txt    # Company list (EDIT THIS)
 ├── output/                          # Generated files (git ignored)
@@ -382,9 +453,11 @@ h1blinkedincompanynamecrewai/
 │   └── slack_parsed_jobs.txt        # YOUR MAIN OUTPUT
 ├── tests/                           # Test scripts
 │   ├── test_slack_logging.py
-│   └── test_slack_parser_logging.py
+│   ├── test_slack_parser.py
+│   └── test_slack_parser_with_keywords.py
 ├── .env                             # API keys (git ignored)
 ├── README.md                        # This file
+├── KEYWORD_FILTERING.md             # Keyword filtering guide (NEW!)
 ├── SLACK_SETUP.md                   # Slack bot setup guide
 ├── SETUP_INSTRUCTIONS.md            # Serper API setup
 └── pyproject.toml                   # Python dependencies
@@ -417,6 +490,7 @@ If you'd like to improve this project:
 - **Setup Guides**: 
   - `SLACK_SETUP.md` - Slack bot configuration
   - `SETUP_INSTRUCTIONS.md` - Serper API setup
+  - `KEYWORD_FILTERING.md` - Job keyword filtering guide (NEW!)
   - `SLACK_DEBUGGING_GUIDE.md` - Troubleshooting Slack issues
   - `AMAZON_MATCHING_FIX.md` - Company matching algorithm details
   - `PER_ATTACHMENT_MATCHING_FIX.md` - Multi-job message handling

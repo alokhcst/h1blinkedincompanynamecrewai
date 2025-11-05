@@ -16,13 +16,15 @@ slack_jobs_task:
 
 slack_parser_task:
   description: >
-    Use SlackParserTool to parse the Slack messages JSON and extract ALL matching jobs.
+    Use SlackParserTool to parse the Slack messages JSON and extract matching jobs.
     IMPORTANT: This task MUST run AFTER slack_jobs_task completes successfully.
     Parameters: slack_json_path: "output/slack_jobs_raw.json", 
-                companies_file_path: {companies_file_path}
-    The tool will match companies and output ALL job details (no keyword filtering).
+                companies_file_path: {companies_file_path},
+                keywords_file_path: "input/job_keywords.txt"
+    The tool will match companies, filter by keywords from input/job_keywords.txt,
+    and output only jobs matching BOTH company names AND keywords.
   expected_output: >
-    Plain text: company_name, job_title, job_id, job_url
+    Plain text: company_name, job_title, job_id, job_url (filtered by keywords)
   agent: slack_parser
   output_file: output/slack_parsed_jobs.txt
   context: [slack_jobs_task]

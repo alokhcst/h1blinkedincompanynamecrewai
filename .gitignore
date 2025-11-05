@@ -19,6 +19,9 @@ output/
 !knowledge/*.txt
 !knowledge/*.csv
 
+# Exception: Keep input configuration files (like job_keywords.txt)
+!input/*.txt
+
 # Exception: Keep example/template files
 !*example*.txt
 !*template*.txt

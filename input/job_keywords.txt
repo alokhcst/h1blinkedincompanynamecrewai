@@ -1,0 +1,31 @@
+Data Engineer
+Data Scientist
+Machine Learning Engineer
+AI Engineer
+Software Engineer
+DevOps Engineer
+Cloud Engineer
+Full Stack Developer
+Backend Developer
+Frontend Developer
+Senior Developer
+Lead Engineer
+Principal Engineer
+Staff Engineer
+Analytics Engineer
+Business Intelligence
+Data Analyst
+Solutions Architect
+Technical Architect
+System Engineer
+Data Engineering Manager
+Data Architect
+AWS Solutions Architect
+Azure Solutions Architect
+Azure Databricks
+Snowflake
+Director Data and AI
+AI Leader
+AI Manager
+
+
